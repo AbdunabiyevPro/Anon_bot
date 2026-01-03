@@ -1,3 +1,7 @@
+import os
+from aiohttp import web
+import asyncio
+
 import asyncio
 import logging
 from aiogram import Bot, Dispatcher, types, F
@@ -87,14 +91,23 @@ async def send_reply(message: types.Message, state: FSMContext):
     await state.clear()
 
 
+async def handle(request):
+    return web.Response(text="Bot is running!")
+
+
+async def start_server():
+    app = web.Application()
+    app.router.add_get("/", handle)
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, "0.0.0.0", int(os.environ.get("PORT", 8000)))
+    await site.start()
+
+
 async def main():
-    print("Bot ishga tushdi...")
-    await bot.delete_webhook(drop_pending_updates=True)
+    task = asyncio.create_task(start_server())
     await dp.start_polling(bot)
 
 
 if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        print("Bot to'xtatildi!")
+    asyncio.run(main())
